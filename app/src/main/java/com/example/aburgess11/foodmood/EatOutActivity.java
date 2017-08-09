@@ -25,7 +25,6 @@ import android.widget.Toast;
 
 import com.example.aburgess11.foodmood.models.FoodItem;
 import com.example.aburgess11.foodmood.models.Group;
-import com.example.aburgess11.foodmood.models.Match;
 import com.example.aburgess11.foodmood.models.Restaurant;
 import com.example.aburgess11.foodmood.models.User;
 import com.facebook.AccessToken;
@@ -57,14 +56,13 @@ public class EatOutActivity extends AppCompatActivity {
 
     // instance fields
     // the list of individual matches
-    private ArrayList<Match> myMatches;
+    public static ArrayList<Restaurant> myMatches;
     // the list of group matches
-    private ArrayList<Match> groupMatches;
+    private ArrayList<Restaurant> groupMatches;
     // the recycler view
     RecyclerView rvMatches;
     // the nested scroll view
     NestedScrollView nestedScrollView;
-    // the adapter wired to the recycler view
     public User user;
     public Group group;
     public Context context;
@@ -112,22 +110,15 @@ public class EatOutActivity extends AppCompatActivity {
     private SwipePlaceHolderView groupSwipeView;
     private FrameLayout groupSwipeViewContainer;
 
-    private Context mContext;
-
     public EatOutActivity() {}
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Log.d("LOGIN", "onCreate");
-
-        if (savedInstanceState != null) {
-            Log.d("Sean", "onCreate: " + savedInstanceState.getInt("saved"));
-        }
         setContentView(R.layout.activity_main);
         // init the list of individual matches
         myMatches = new ArrayList<>();
-        // init the list of group matches
         groupMatches = new ArrayList<>();
 
 //        // resolve the recycler view and connect a layout manager
@@ -352,8 +343,6 @@ public class EatOutActivity extends AppCompatActivity {
         groupSwipeViewContainer = (FrameLayout) findViewById(R.id.groupSwipeViewContainer);
         groupSwipeView = (SwipePlaceHolderView)findViewById(R.id.groupSwipeView);
 
-        mContext = getApplicationContext();
-
 //        // init the myMatches and groupMatches cards
 //        mySwipeView.getBuilder()
 //                .setDisplayViewCount(3)
@@ -425,32 +414,6 @@ public class EatOutActivity extends AppCompatActivity {
             }
         };
 
-//        rejectBtn.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                mSwipeView.doSwipe(false);
-//                Log.d("EVENT", "swipeCount");
-//
-//            }
-//        });
-//
-//        acceptBtn.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                mSwipeView.doSwipe(true);
-//                Log.d("EVENT", "swipeCount");
-//            }
-//        });
-//
-//        profileBtn.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                Intent i = new Intent(EatOutActivity.this, SettingsActivity.class);
-//                startActivity(i);
-//                overridePendingTransition(R.anim.enter_from_left_to_right, R.anim.exit_from_right_to_left);
-//            }
-//        });
-
         // tracks if there are any changes to the groupToggle status
         groupToggle.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
@@ -475,61 +438,6 @@ public class EatOutActivity extends AppCompatActivity {
             }
         });
     }
-
-//    private ArrayList<Match> refreshIndividualSwiping(Context context) {
-//        myMatches = new ArrayList<>();
-//        loadMatches(getApplicationContext(), myMatches);
-//
-//        // delete mySwipeView from its container and create a new one
-//        mySwipeViewContainer.removeAllViews();
-//        mySwipeView = new SwipePlaceHolderView(EatOutActivity.this);
-//        mySwipeViewContainer.addView(mySwipeView);
-//
-//        swipeCount=0;
-//
-//        // init the myMatches and groupMatches cards
-//        mySwipeView.getBuilder()
-//                .setDisplayViewCount(3)
-//                .setSwipeDecor(new SwipeDecor()
-//                        .setPaddingTop(20)
-//                        .setRelativeScale(0.01f)
-//                        .setSwipeInMsgLayoutId(R.layout.tinder_swipe_in_msg_view)
-//                        .setSwipeOutMsgLayoutId(R.layout.tinder_swipe_out_msg_view));
-//
-//        for(SwipeProfile profile : Utils.loadProfiles(getApplicationContext())){
-//            mySwipeView.addView(new TinderCard(mContext, profile, mySwipeView, myMatches));
-//        }
-//
-//        return myMatches;
-//    }
-
-//        private ArrayList<Restaurant> refreshIndividualSwiping(Context context) {
-//            Map<String, Restaurant> restaurants = new HashMap<>();
-//            myMatches = new ArrayList<>();
-//
-//            // delete mySwipeView from its container and create a new one
-//            mySwipeViewContainer.removeAllViews();
-//            mySwipeView = new SwipePlaceHolderView(EatOutActivity.this);
-//            mySwipeViewContainer.addView(mySwipeView);
-//
-//            swipeCount=0;
-//
-//            // init the myMatches and groupMatches cards
-//            mySwipeView.getBuilder()
-//                    .setDisplayViewCount(3)
-//                    .setSwipeDecor(new SwipeDecor()
-//                            .setPaddingTop(20)
-//                            .setRelativeScale(0.01f)
-//                            .setSwipeInMsgLayoutId(R.layout.tinder_swipe_in_msg_view)
-//                            .setSwipeOutMsgLayoutId(R.layout.tinder_swipe_out_msg_view));
-//
-//            for(SwipeProfile profile : Utils.loadProfiles(getApplicationContext())){
-//                mySwipeView.addView(new TinderCard(mContext, profile, mySwipeView, myMatches));
-//            }
-//
-//            loadMatches();
-//            return myMatches;
-//        }
 
     @Override
     protected void onResume() {
@@ -659,6 +567,11 @@ public class EatOutActivity extends AppCompatActivity {
         //getting reference to the sessions and populating the data
         //User
         fbProfile = Profile.getCurrentProfile();
+        if ( fbProfile == null){
+            Intent i = new Intent(EatOutActivity.this, LoginActivity.class);
+            startActivity(i);
+        } else{
+
         String userId = fbProfile.getId();
         user = new User();
         user.name = fbProfile.getName();
@@ -666,6 +579,7 @@ public class EatOutActivity extends AppCompatActivity {
         userRef = database.getReference("Users").child(userId);
         populateDatabase(database, userRef);
         listenForUpdates(database, userRef);
+        }
     }
 
     private void listenForUpdates(final FirebaseDatabase database, final DatabaseReference sessionRef) {
@@ -706,12 +620,11 @@ public class EatOutActivity extends AppCompatActivity {
         cityName = getIntent().getStringExtra("cityName");
 
         DatabaseReference citiesRef = database.getReference("Cities");
-        Log.d("Sean", "citiesRef: " + database.getReference("Cities").child(cityName).toString());
 
         citiesRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                Log.d("Sean", "Restaurants: " + dataSnapshot.child(cityName).child("Restaurants").getValue().toString());
+               // Log.d("Sean", "Restaurants: " + dataSnapshot.child(cityName).child("Restaurants").getValue().toString());
                 Map<String, Restaurant> restaurants = new HashMap();
                 for (DataSnapshot restaurantData : dataSnapshot.child(cityName).child("Restaurants").getChildren()) {
                     restaurants.put(restaurantData.getKey(), restaurantData.getValue(Restaurant.class));
@@ -719,8 +632,8 @@ public class EatOutActivity extends AppCompatActivity {
                 DatabaseReference restaurantsRef = sessionRef.child("Restaurants");
                 restaurantsRef.setValue(restaurants);
 
-                Log.d("Sean", "Food Items: " + dataSnapshot.child(cityName).child("Food Items").getValue().toString());
-                Log.d("Sean", "Food Items Class: " + dataSnapshot.child(cityName).child("Food Items").getClass().toString());
+                //Log.d("Sean", "Food Items: " + dataSnapshot.child(cityName).child("Food Items").getValue().toString());
+               // Log.d("Sean", "Food Items Class: " + dataSnapshot.child(cityName).child("Food Items").getClass().toString());
 
                 ArrayList<Object> foodItems = (ArrayList) dataSnapshot.child(cityName).child("Food Items").getValue();
                 DatabaseReference foodItemsRef = sessionRef.child("Food Items");
